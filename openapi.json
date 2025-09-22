@@ -1,0 +1,1701 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "博客系统后端 API",
+    "description": "一个基于 Node.js + Express + TypeScript + SQLite 构建的现代化博客系统后端服务，提供完整的博客功能 API 接口。",
+    "version": "1.0.0",
+    "contact": {
+      "name": "博客系统开发团队",
+      "email": "admin@blog.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001/api",
+      "description": "开发环境"
+    },
+    {
+      "url": "https://api.yourdomain.com/api",
+      "description": "生产环境"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT认证令牌"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "用户ID"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "邮箱地址"
+          },
+          "username": {
+            "type": "string",
+            "description": "用户名"
+          },
+          "avatar": {
+            "type": "string",
+            "nullable": true,
+            "description": "头像URL"
+          },
+          "bio": {
+            "type": "string",
+            "nullable": true,
+            "description": "个人简介"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["user", "author", "admin"],
+            "description": "用户角色"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
+      "Article": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "文章ID"
+          },
+          "title": {
+            "type": "string",
+            "description": "文章标题"
+          },
+          "content": {
+            "type": "string",
+            "description": "文章内容"
+          },
+          "summary": {
+            "type": "string",
+            "nullable": true,
+            "description": "文章摘要"
+          },
+          "author_id": {
+            "type": "integer",
+            "description": "作者ID"
+          },
+          "author_name": {
+            "type": "string",
+            "description": "作者名称"
+          },
+          "category_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "分类ID"
+          },
+          "category_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "分类名称"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "published", "archived"],
+            "description": "文章状态"
+          },
+          "views": {
+            "type": "integer",
+            "description": "浏览量"
+          },
+          "likes": {
+            "type": "integer",
+            "description": "点赞数"
+          },
+          "comments_count": {
+            "type": "integer",
+            "description": "评论数"
+          },
+          "cover_image": {
+            "type": "string",
+            "nullable": true,
+            "description": "封面图片URL"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            },
+            "description": "文章标签"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "评论ID"
+          },
+          "content": {
+            "type": "string",
+            "description": "评论内容"
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "用户ID"
+          },
+          "article_id": {
+            "type": "integer",
+            "description": "文章ID"
+          },
+          "parent_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "父评论ID"
+          },
+          "likes": {
+            "type": "integer",
+            "description": "点赞数"
+          },
+          "is_liked": {
+            "type": "boolean",
+            "description": "当前用户是否已点赞"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "username": {
+                "type": "string"
+              },
+              "avatar": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "replies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Comment"
+            },
+            "description": "回复列表"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "分类ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "分类名称"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "分类描述"
+          },
+          "icon": {
+            "type": "string",
+            "nullable": true,
+            "description": "分类图标"
+          },
+          "article_count": {
+            "type": "integer",
+            "description": "文章数量"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          }
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "标签ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "标签名称"
+          },
+          "color": {
+            "type": "string",
+            "description": "标签颜色"
+          },
+          "article_count": {
+            "type": "integer",
+            "description": "使用该标签的文章数量"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          }
+        }
+      },
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "请求是否成功"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应消息"
+          },
+          "data": {
+            "type": "object",
+            "description": "响应数据"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "响应时间戳"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "description": "错误消息"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "错误代码"
+              },
+              "details": {
+                "type": "string",
+                "description": "错误详情"
+              }
+            }
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "错误时间戳"
+          }
+        }
+      },
+      "PaginationResponse": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "description": "当前页码"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "每页数量"
+          },
+          "total": {
+            "type": "integer",
+            "description": "总数量"
+          },
+          "totalPages": {
+            "type": "integer",
+            "description": "总页数"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["认证"],
+        "summary": "用户注册",
+        "description": "创建新用户账号",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password", "username"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "邮箱地址"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6,
+                    "description": "密码（至少6位）"
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "用户名"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "注册成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["认证"],
+        "summary": "用户登录",
+        "description": "用户登录获取JWT令牌",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "邮箱地址"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "密码"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "token": {
+                              "type": "string",
+                              "description": "JWT令牌"
+                            },
+                            "user": {
+                              "$ref": "#/components/schemas/User"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "认证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/articles": {
+      "get": {
+        "tags": ["文章"],
+        "summary": "获取文章列表",
+        "description": "获取文章列表，支持分页、搜索、筛选",
+        "security": [],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "每页数量",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "搜索关键词",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "分类ID",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "description": "标签ID",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "文章状态",
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "published", "archived"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "articles": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Article"
+                              }
+                            },
+                            "pagination": {
+                              "$ref": "#/components/schemas/PaginationResponse"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["文章"],
+        "summary": "创建文章",
+        "description": "创建新文章",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "content"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "文章标题"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "文章内容"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "文章摘要"
+                  },
+                  "category_id": {
+                    "type": "integer",
+                    "description": "分类ID"
+                  },
+                  "tag_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "标签ID列表"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["draft", "published"],
+                    "default": "draft",
+                    "description": "文章状态"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/articles/{id}": {
+      "get": {
+        "tags": ["文章"],
+        "summary": "获取文章详情",
+        "description": "根据ID获取文章详情",
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "文章ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "article": {
+                              "$ref": "#/components/schemas/Article"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "文章不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["文章"],
+        "summary": "更新文章",
+        "description": "更新文章信息",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "文章ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "文章标题"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "文章内容"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "文章摘要"
+                  },
+                  "category_id": {
+                    "type": "integer",
+                    "description": "分类ID"
+                  },
+                  "tag_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "标签ID列表"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["draft", "published", "archived"],
+                    "description": "文章状态"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "文章不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["文章"],
+        "summary": "删除文章",
+        "description": "删除指定文章",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "文章ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "文章不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/articles/{id}/like": {
+      "post": {
+        "tags": ["文章"],
+        "summary": "点赞/取消点赞文章",
+        "description": "对文章进行点赞或取消点赞操作",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "文章ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "liked": {
+                              "type": "boolean",
+                              "description": "是否已点赞"
+                            },
+                            "likes": {
+                              "type": "integer",
+                              "description": "总点赞数"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "文章不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comments": {
+      "get": {
+        "tags": ["评论"],
+        "summary": "获取评论列表",
+        "description": "获取指定文章的评论列表",
+        "security": [],
+        "parameters": [
+          {
+            "name": "article_id",
+            "in": "query",
+            "required": true,
+            "description": "文章ID",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "每页数量",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "comments": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Comment"
+                              }
+                            },
+                            "pagination": {
+                              "$ref": "#/components/schemas/PaginationResponse"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["评论"],
+        "summary": "创建评论",
+        "description": "发表新评论",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["content", "article_id"],
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "description": "评论内容"
+                  },
+                  "article_id": {
+                    "type": "integer",
+                    "description": "文章ID"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "comment": {
+                              "$ref": "#/components/schemas/Comment"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comments/{id}/reply": {
+      "post": {
+        "tags": ["评论"],
+        "summary": "回复评论",
+        "description": "回复指定评论",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "父评论ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["content"],
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "description": "回复内容"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "回复成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "comment": {
+                              "$ref": "#/components/schemas/Comment"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comments/{id}/like": {
+      "post": {
+        "tags": ["评论"],
+        "summary": "点赞/取消点赞评论",
+        "description": "对评论进行点赞或取消点赞操作",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "评论ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "is_liked": {
+                              "type": "boolean",
+                              "description": "是否已点赞"
+                            },
+                            "likes": {
+                              "type": "integer",
+                              "description": "总点赞数"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "tags": ["分类"],
+        "summary": "获取分类列表",
+        "description": "获取所有分类列表",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Category"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["分类"],
+        "summary": "创建分类",
+        "description": "创建新分类（需要管理员权限）",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "分类名称"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "分类描述"
+                  },
+                  "icon": {
+                    "type": "string",
+                    "description": "分类图标"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tags": {
+      "get": {
+        "tags": ["标签"],
+        "summary": "获取标签列表",
+        "description": "获取所有标签列表",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Tag"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["标签"],
+        "summary": "创建标签",
+        "description": "创建新标签（需要管理员权限）",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "标签名称"
+                  },
+                  "color": {
+                    "type": "string",
+                    "description": "标签颜色",
+                    "default": "#3B82F6"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upload/image": {
+      "post": {
+        "tags": ["文件上传"],
+        "summary": "上传图片",
+        "description": "上传图片文件",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "图片文件"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "上传成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "url": {
+                              "type": "string",
+                              "description": "图片访问URL"
+                            },
+                            "filename": {
+                              "type": "string",
+                              "description": "文件名"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile": {
+      "get": {
+        "tags": ["个人资料"],
+        "summary": "获取个人信息",
+        "description": "获取当前用户的个人信息",
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "user": {
+                              "$ref": "#/components/schemas/User"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["个人资料"],
+        "summary": "更新个人信息",
+        "description": "更新当前用户的个人信息",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "用户名"
+                  },
+                  "bio": {
+                    "type": "string",
+                    "description": "个人简介"
+                  },
+                  "avatar": {
+                    "type": "string",
+                    "description": "头像URL"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/stats": {
+      "get": {
+        "tags": ["管理员"],
+        "summary": "获取系统统计",
+        "description": "获取系统统计信息（需要管理员权限）",
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "users": {
+                              "type": "integer",
+                              "description": "用户总数"
+                            },
+                            "articles": {
+                              "type": "integer",
+                              "description": "文章总数"
+                            },
+                            "comments": {
+                              "type": "integer",
+                              "description": "评论总数"
+                            },
+                            "categories": {
+                              "type": "integer",
+                              "description": "分类总数"
+                            },
+                            "tags": {
+                              "type": "integer",
+                              "description": "标签总数"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/logs": {
+      "get": {
+        "tags": ["管理员"],
+        "summary": "获取操作日志",
+        "description": "获取系统操作日志（需要管理员权限）",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "每页数量",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "description": "操作类型",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resource",
+            "in": "query",
+            "description": "资源类型",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "logs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "user_id": {
+                            "type": "integer"
+                          },
+                          "action": {
+                            "type": "string"
+                          },
+                          "resource": {
+                            "type": "string"
+                          },
+                          "details": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    },
+                    "totalPages": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/monitoring": {
+      "post": {
+        "tags": ["监控"],
+        "summary": "提交错误报告",
+        "description": "提交前端错误报告或性能数据",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "报告ID"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["javascript", "promise", "resource", "network", "custom"],
+                    "description": "错误类型"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "错误消息"
+                  },
+                  "stack": {
+                    "type": "string",
+                    "description": "错误堆栈"
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "发生错误的页面URL"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "错误发生时间"
+                  },
+                  "userAgent": {
+                    "type": "string",
+                    "description": "用户代理"
+                  },
+                  "sessionId": {
+                    "type": "string",
+                    "description": "会话ID"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "提交成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "认证",
+      "description": "用户认证相关接口"
+    },
+    {
+      "name": "文章",
+      "description": "文章管理相关接口"
+    },
+    {
+      "name": "评论",
+      "description": "评论系统相关接口"
+    },
+    {
+      "name": "分类",
+      "description": "分类管理相关接口"
+    },
+    {
+      "name": "标签",
+      "description": "标签管理相关接口"
+    },
+    {
+      "name": "文件上传",
+      "description": "文件上传相关接口"
+    },
+    {
+      "name": "个人资料",
+      "description": "用户个人资料管理接口"
+    },
+    {
+      "name": "管理员",
+      "description": "管理员功能相关接口"
+    },
+    {
+      "name": "监控",
+      "description": "系统监控相关接口"
+    }
+  ]
+}
