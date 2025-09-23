@@ -60,7 +60,376 @@
 ```bash
 git clone <repository-url>
 cd blog-backend
+
+# 临时添加域名解析到本地hosts文件
+echo "YOUR_SERVER_IP blogapi.yunforge.xyz" | sudo tee -a /etc/hosts
 ```
+
+**2. 证书域名不匹配**
+- 确保SSL证书包含正确的域名
+- 重新申请包含所有子域名的证书
+
+**3. 服务器配置错误**
+- 检查Nginx配置语法：`sudo nginx -t`
+- 重启Nginx服务：`sudo systemctl restart nginx`
+- 检查服务状态：`sudo systemctl status nginx`
+
+**📋 生产环境部署检查清单：**
+
+1. ✅ 域名DNS记录正确配置
+2. ✅ 服务器防火墙端口开放
+3. ✅ Nginx虚拟主机配置正确
+4. ✅ SSL证书有效且域名匹配
+5. ✅ 后端服务正常运行
+6. ✅ 代理配置路径正确
+7. ✅ 安全组规则允许访问
+8. ✅ DNS传播完成
+9. ✅ 证书自动续期配置
+10. ✅ 监控和日志配置
+11. ✅ 备份和恢复策略
+12. ✅ 性能优化配置
+13. ✅ 安全加固措施
+14. ✅ 错误页面配置
+15. ✅ 健康检查端点
+
+#### 🚨 500 Internal Server Error (内部服务器错误)
+
+**问题描述：**
+当前端请求API时返回500内部服务器错误，通常表明后端服务存在运行时错误、配置问题或依赖冲突。
+
+**🔍 错误原因分析：**
+
+**1. 数据库连接问题**
+- 数据库文件路径错误
+- 数据库权限不足
+- 数据库文件损坏
+- 连接池配置错误
+
+**2. 依赖包版本冲突**
+- bcrypt vs bcryptjs 不兼容
+- Node.js版本与依赖不匹配
+- 缺失必要的依赖包
+- 原生模块编译失败
+
+**3. 文件路径错误**
+- 相对路径在生产环境失效
+- 文件权限不足
+- 静态资源路径错误
+- 上传目录不存在
+
+**4. 环境变量缺失**
+- JWT_SECRET未配置
+- 数据库连接字符串缺失
+- 端口配置错误
+- 第三方服务密钥缺失
+
+**5. 代码运行时错误**
+- 未捕获的异常
+- 异步操作错误处理
+- 类型转换错误
+- 内存泄漏
+
+**🔧 快速排查步骤：**
+
+**1. 检查服务器日志**
+```bash
+# 查看应用日志
+tail -f /var/log/your-app.log
+
+# 查看PM2日志
+pm2 logs
+pm2 logs your-app-name
+
+# 查看系统日志
+sudo journalctl -u your-service -f
+
+# 查看Nginx错误日志
+sudo tail -f /var/log/nginx/error.log
+```
+
+**2. 验证数据库连接**
+```bash
+# 检查数据库文件是否存在
+ls -la /path/to/blog.db
+
+# 检查数据库文件权限
+stat /path/to/blog.db
+
+# 测试数据库连接
+sqlite3 /path/to/blog.db ".tables"
+
+# 检查数据库完整性
+sqlite3 /path/to/blog.db "PRAGMA integrity_check;"
+```
+
+**3. 检查依赖包安装**
+```bash
+# 检查package.json和实际安装的包
+npm list
+npm list --depth=0
+
+# 重新安装依赖
+rm -rf node_modules package-lock.json
+npm install
+
+# 检查特定包版本
+npm list bcrypt bcryptjs
+```
+
+**4. 验证环境变量配置**
+```bash
+# 检查环境变量
+env | grep -E "JWT_SECRET|DB_|PORT"
+
+# 检查.env文件
+cat .env
+
+# 验证环境变量加载
+node -e "require('dotenv').config(); console.log(process.env.JWT_SECRET);"
+```
+
+**5. 测试API端点**
+```bash
+# 测试健康检查端点
+curl -v http://localhost:3000/api/health
+
+# 测试具体出错的端点
+curl -v -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"123456"}'
+
+# 检查响应头
+curl -I http://localhost:3000/api/profile
+```
+
+**🛠️ 常见解决方案：**
+
+**1. 数据库路径修复**
+```javascript
+// 修复相对路径问题
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 使用绝对路径
+const dbPath = path.resolve(__dirname, '../blog.db');
+// 或使用环境变量
+const dbPath = process.env.DB_PATH || path.resolve(__dirname, '../blog.db');
+```
+
+**2. 依赖包统一**
+```bash
+# 统一使用bcryptjs（推荐）
+npm uninstall bcrypt
+npm install bcryptjs
+
+# 或统一使用bcrypt
+npm uninstall bcryptjs
+npm install bcrypt
+
+# 重新构建原生模块
+npm rebuild
+```
+
+**3. 环境变量配置**
+```bash
+# 创建.env文件
+cat > .env << EOF
+JWT_SECRET=your-super-secret-jwt-key-here
+DB_PATH=/absolute/path/to/blog.db
+PORT=3000
+NODE_ENV=production
+EOF
+
+# 设置文件权限
+chmod 600 .env
+```
+
+**4. 错误处理改进**
+```javascript
+// 添加全局错误处理
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+// 路由级错误处理
+app.use((error, req, res, next) => {
+  console.error('Error:', error);
+  res.status(500).json({
+    success: false,
+    error: process.env.NODE_ENV === 'production' 
+      ? 'Internal Server Error' 
+      : error.message
+  });
+});
+```
+
+**🔍 调试方法：**
+
+**1. 查看详细错误日志**
+```bash
+# 启用调试模式
+DEBUG=* npm start
+
+# 或设置日志级别
+LOG_LEVEL=debug npm start
+
+# 使用PM2查看详细日志
+pm2 start ecosystem.config.js --env production
+pm2 logs --lines 100
+```
+
+**2. 使用调试模式**
+```bash
+# Node.js调试模式
+node --inspect src/server.js
+
+# 或使用nodemon调试
+nodemon --inspect src/server.js
+
+# 连接Chrome DevTools
+# 打开 chrome://inspect
+```
+
+**3. 逐步测试功能模块**
+```javascript
+// 创建测试脚本 test-modules.js
+import { initializeDatabase } from './src/database/connection.js';
+
+async function testModules() {
+  try {
+    console.log('Testing database connection...');
+    await initializeDatabase();
+    console.log('✅ Database connection successful');
+    
+    console.log('Testing auth routes...');
+    // 添加其他模块测试
+    
+  } catch (error) {
+    console.error('❌ Module test failed:', error);
+  }
+}
+
+testModules();
+```
+
+**4. 性能和内存监控**
+```bash
+# 使用clinic.js进行性能分析
+npm install -g clinic
+clinic doctor -- node src/server.js
+
+# 内存使用监控
+node --max-old-space-size=4096 src/server.js
+
+# 使用PM2监控
+pm2 monit
+```
+
+**🛡️ 预防措施：**
+
+**1. 统一依赖管理**
+```json
+// package.json 中明确指定版本
+{
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}
+```
+
+**2. 完善错误处理**
+```javascript
+// 数据库操作错误处理
+try {
+  const result = await db.run(query, params);
+  return result;
+} catch (error) {
+  console.error('Database operation failed:', error);
+  throw new Error('Database operation failed');
+}
+
+// API路由错误处理
+router.get('/profile', async (req, res) => {
+  try {
+    // 业务逻辑
+  } catch (error) {
+    console.error('Profile API error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch profile'
+    });
+  }
+});
+```
+
+**3. 环境一致性检查**
+```bash
+# 创建环境检查脚本
+cat > check-env.js << 'EOF'
+const requiredEnvVars = ['JWT_SECRET', 'DB_PATH', 'PORT'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error('Missing environment variables:', missingVars);
+  process.exit(1);
+}
+
+console.log('✅ All required environment variables are set');
+EOF
+
+# 在启动前运行检查
+node check-env.js && npm start
+```
+
+**4. 健康检查和监控**
+```javascript
+// 添加详细的健康检查端点
+app.get('/api/health', async (req, res) => {
+  const health = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    database: 'unknown'
+  };
+  
+  try {
+    // 测试数据库连接
+    await db.get('SELECT 1');
+    health.database = 'connected';
+  } catch (error) {
+    health.database = 'disconnected';
+    health.status = 'error';
+  }
+  
+  const statusCode = health.status === 'ok' ? 200 : 503;
+  res.status(statusCode).json(health);
+});
+```
+
+**💡 特别注意：**
+
+1. **生产环境不要暴露详细错误信息**
+2. **定期备份数据库文件**
+3. **使用进程管理器（PM2）确保服务稳定**
+4. **配置日志轮转避免磁盘空间不足**
+5. **监控服务器资源使用情况**
+6. **定期更新依赖包修复安全漏洞**
 
 ### 2. 安装依赖
 ```bash
